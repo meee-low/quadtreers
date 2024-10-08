@@ -19,6 +19,19 @@ struct Subdivision {
     sw: Box<Quadtree>,
 }
 
+impl Subdivision {
+    fn new_from_parent_container(container: &RectContainer) -> Subdivision {
+        let cx = (container.lx + container.rx) / 2.0;
+        let cy = (container.ty + container.by) / 2.0;
+        let ne = Box::new(Quadtree::new(cx, container.rx, container.ty, cy));
+        let nw = Box::new(Quadtree::new(container.lx, cx, container.ty, cy));
+        let sw = Box::new(Quadtree::new(container.lx, cx, cy, container.by));
+        let se = Box::new(Quadtree::new(cx, container.rx, cy, container.by));
+
+        Subdivision { ne, nw, sw, se }
+    }
+}
+
 type BoidID = usize;
 
 #[derive(Debug, Clone, Copy)]
@@ -259,14 +272,8 @@ impl Quadtree {
     }
 
     fn subdivide(&mut self, bp: &BoidPool) {
-        let cx = (self.container.lx + self.container.rx) / 2.0;
-        let cy = (self.container.ty + self.container.by) / 2.0;
-        let ne = Box::new(Quadtree::new(cx, self.container.rx, self.container.ty, cy));
-        let nw = Box::new(Quadtree::new(self.container.lx, cx, self.container.ty, cy));
-        let sw = Box::new(Quadtree::new(self.container.lx, cx, cy, self.container.by));
-        let se = Box::new(Quadtree::new(cx, self.container.rx, cy, self.container.by));
-
-        self.subdivisions = Some(Subdivision { ne, nw, se, sw });
+        debug_assert!(self.subdivisions.is_some(), "Should not be subdividing if it is already subdivided.");
+        self.subdivisions = Some(Subdivision::new_from_parent_container(&self.container));
 
         let boids_ids = std::mem::take(&mut self.boids);
 
