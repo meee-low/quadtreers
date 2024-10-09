@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use std::vec;
 
-const QT_CAPACITY: usize = 3;
+const QT_CAPACITY: usize = 12;
 const WORLD_WIDTH: Coord = 800.0;
 const WORLD_HEIGHT: Coord = 800.0;
 const WORLD_CENTER: Vector2D = Vector2D {
@@ -407,9 +407,9 @@ impl BoidWorld {
     fn calculate_headings(&mut self) {
         const TOO_CLOSE: Coord = 2.5;
         const VIEW_RANGE: Coord = 25.0;
-        const SEPARATION_FACTOR: Coord = 0.000;
-        const ALIGNMENT_FACTOR: Coord = 0.000;
-        const COHESION_FACTOR: Coord = 0.000;
+        const SEPARATION_FACTOR: Coord = 0.0002;
+        const ALIGNMENT_FACTOR: Coord = 0.002;
+        const COHESION_FACTOR: Coord = 0.002;
         const CENTER_PULL_FACTOR: Coord = 0.002;
 
         for id in 0..self.bp.len() {
@@ -556,14 +556,17 @@ fn main() {
     // Setup
     let mut world = BoidWorld::new(WORLD_WIDTH, WORLD_HEIGHT);
     let mut rng = thread_rng();
-    world.populate(20, &mut rng);
+    world.populate(2000, &mut rng);
 
     // Game loop
-    for i in 0..1000 {
+    // for i in 0..10000 {
+    let mut i = 0;
+    loop {
         // dbg!(&world);
         println!("Iteration: {}", i);
         world.update(1.0 / 60.0);
+        i += 1;
     }
 
-    println!("Finished.")
+    // println!("Finished.")
 }
