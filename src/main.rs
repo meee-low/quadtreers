@@ -476,8 +476,7 @@ impl BoidWorld {
 
                 working_space.add(heading);
             }
-            working_space.x /= (neighbors.len() - 1) as Coord;
-            working_space.y /= (neighbors.len() - 1) as Coord;
+            working_space.div_scalar((neighbors.len() - 1) as Coord);
             self.bp
                 .future_heading_add_scaled(id, &working_space, ALIGNMENT_FACTOR);
 
@@ -548,17 +547,16 @@ impl BoidWorld {
     }
 }
 
-fn wrap_around(x: Coord, min: Coord, max: Coord) -> Coord {
-    let mut res = x;
+fn wrap_around(mut x: Coord, min: Coord, max: Coord) -> Coord {
     debug_assert!(max > min);
     let gap = max - min;
-    while res < min {
-        res += gap
+    while x < min {
+        x += gap
     }
-    while res > max {
-        res -= gap
+    while x > max {
+        x -= gap
     }
-    res
+    x
 }
 
 fn run_simulation(quantity_of_boids: usize, number_of_iterations: usize) -> Duration {
