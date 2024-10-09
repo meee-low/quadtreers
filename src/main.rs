@@ -30,6 +30,10 @@ impl Subdivision {
 
         Subdivision { ne, nw, sw, se }
     }
+
+    fn all_are_empty(&self) -> bool {
+        self.ne.is_empty() && self.nw.is_empty() && self.se.is_empty() && self.sw.is_empty()
+    }
 }
 
 type BoidID = usize;
@@ -373,6 +377,10 @@ impl Quadtree {
             results.append(&mut sub.sw.query_range(query, bp));
         }
         results
+    }
+
+    fn is_empty(&self) -> bool {
+        self.subdivisions.is_none() && self.boids.is_empty()
     }
 }
 
