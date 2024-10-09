@@ -319,41 +319,40 @@ impl Quadtree {
     }
 
     fn rebalance(&mut self, bp: &BoidPool) {
-        self._rebalance(bp, None)
+        match self._rebalance(bp).is_empty() {
+            true => (),
+            false => panic!("Could not rebalance properly. Some elements were lost."),
+        }
     }
 
-    fn _rebalance(&mut self, bp: &BoidPool, parent: Option<&mut Quadtree>) {
-        // Go deep first and throw the bad ones up.
+    fn _rebalance(&mut self, bp: &BoidPool) -> Vec<BoidID> {
+        let mut rejects = vec![];
+
         if let Some(mut sub) = self.subdivisions.take() {
-            sub.ne._rebalance(bp, Some(self));
-            sub.nw._rebalance(bp, Some(self));
-            sub.se._rebalance(bp, Some(self));
-            sub.sw._rebalance(bp, Some(self));
-
-            self.subdivisions = Some(sub);
-        }
-
-        // Bubble up the ones that have become misplaced.
-        if let Some(parent) = parent {
+            // Go deep first and throw the bad ones up.
+            rejects.append(&mut sub.ne._rebalance(bp));
+            rejects.append(&mut sub.nw._rebalance(bp));
+            rejects.append(&mut sub.se._rebalance(bp));
+            rejects.append(&mut sub.sw._rebalance(bp));
+            if !sub.all_are_empty() {
+                self.subdivisions = Some(sub);
+            }
+            // Try to push to another child. Keep the ones that couldn't be pushed to bubble further up.
+            rejects.retain(|&id| self.push(id, bp).is_err());
+        } else {
+            // Not subdivided, so must check self's own boids.
             self.boids.retain(|&id| {
                 let position = bp.get_position(id);
                 if self.container.contains(position.x, position.y) {
                     true
                 } else {
-                    println!(
-                        "Bubbling boid with id {} in position `{:?}` up from {:?}",
-                        id, position, self.container
-                    );
-                    match parent.push_unchecked_with_position(id, bp, position) {
-                        Ok(_) => false,
-                        Err(e) => {
-                            panic!("Error while rebalancing: {}", e);
-                        }
-                    }
+                    rejects.push(id);
+                    false
                 }
             });
         }
-        // If no parent, do nothing, since we must be at the top-most level.
+
+        rejects
     }
 
     fn query_range(&self, query: &RectContainer, bp: &BoidPool) -> Vec<BoidID> {
