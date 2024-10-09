@@ -269,10 +269,14 @@ impl Quadtree {
             Quadrant::SE => sub.se.push(boid_id, bp),
             Quadrant::SW => sub.sw.push(boid_id, bp),
         }
+        .map_err(|e| format!("Could not push to child: {}", e))
     }
 
     fn subdivide(&mut self, bp: &BoidPool) {
-        debug_assert!(self.subdivisions.is_some(), "Should not be subdividing if it is already subdivided.");
+        debug_assert!(
+            self.subdivisions.is_none(),
+            "Should not be subdividing if it is already subdivided. {self:?}"
+        );
         self.subdivisions = Some(Subdivision::new_from_parent_container(&self.container));
 
         let boids_ids = std::mem::take(&mut self.boids);
@@ -288,13 +292,13 @@ impl Quadtree {
                 }
             };
 
-            let r = match quad {
+            match quad {
                 Quadrant::NE => sub.ne.push(boid_id, bp),
                 Quadrant::NW => sub.nw.push(boid_id, bp),
                 Quadrant::SE => sub.se.push(boid_id, bp),
                 Quadrant::SW => sub.sw.push(boid_id, bp),
-            };
-            r.expect("It should be able to push to the children.");
+            }
+            .expect("It should be able to push to the children, but couldn't: ");
         }
     }
 
