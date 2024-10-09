@@ -1,5 +1,8 @@
 use rand::prelude::*;
-use std::vec;
+use std::{
+    time::{Duration, Instant},
+    vec,
+};
 
 const QT_CAPACITY: usize = 12;
 const WORLD_WIDTH: Coord = 800.0;
@@ -563,21 +566,37 @@ fn wrap_around(x: Coord, min: Coord, max: Coord) -> Coord {
     res
 }
 
-fn main() {
+fn run_simulation(quantity_of_boids: usize, number_of_iterations: usize) -> Duration {
     // Setup
     let mut world = BoidWorld::new(WORLD_WIDTH, WORLD_HEIGHT);
     let mut rng = thread_rng();
-    world.populate(2000, &mut rng);
+    world.populate(quantity_of_boids, &mut rng);
 
-    // Game loop
-    // for i in 0..10000 {
-    let mut i = 0;
-    loop {
-        // dbg!(&world);
-        println!("Iteration: {}", i);
-        world.update(1.0 / 60.0);
-        i += 1;
+    let clock = Instant::now();
+    if number_of_iterations == 0 {
+        loop {
+            world.update(1.0 / 60.0);
+        }
+    } else {
+        for _ in 0..number_of_iterations {
+            world.update(1.0 / 60.0);
+        }
     }
+    clock.elapsed()
+}
 
-    // println!("Finished.")
+fn main() {
+    let iterations = [100, 1000];
+    let number_of_boids = [1, 10, 100, 1000, 2000, 3000, 5000, 10000];
+    println!("Expected time per frame: {}ms", 1000.0 / 60.0);
+
+    for it in iterations {
+        for num in number_of_boids {
+            let duration = run_simulation(num, it);
+            println!(
+                "{num} boids, {it} iterations: {duration:?}. Avg time per frame: {:?}",
+                duration / it as u32
+            );
+        }
+    }
 }
