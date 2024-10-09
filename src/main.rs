@@ -438,19 +438,14 @@ impl BoidWorld {
 
             let neighbors = self.qt.query_range(&neighborhood, &self.bp);
 
-            if neighbors.is_empty() {
-                dbg!(id, position, neighborhood);
-                dbg!(&self);
-                panic!("Somehow neighbors is empty...")
-            }
+            debug_assert!(neighbors.len() > 0);
 
-            if neighbors.len() == 1 {
-                // = 1 because neighbors should include the element itself.
+            if neighbors.len() < 2 {
+                // 1 is always the boid itself, so it needs at least 2 to make any calculations.
                 continue;
             }
 
-            assert!(neighbors.len() >= 2);
-
+            // This vector gets reset and reused for each phase of calculation
             let mut working_space = Vector2D::new(0.0, 0.0);
 
             // Separation
@@ -527,19 +522,19 @@ impl BoidWorld {
                 .clamp(MIN_SPEED, MAX_SPEED)
                 .mult_scalar(deltatime * EXPECTED_FPS);
 
-            assert!(!future_heading.x.is_nan());
-            assert!(!future_heading.y.is_nan());
+            debug_assert!(!future_heading.x.is_nan());
+            debug_assert!(!future_heading.y.is_nan());
 
             let position = self.bp.get_position(id);
             let mut new_position_x = position.x + future_heading.x;
             let mut new_position_y = position.y + future_heading.y;
 
+            debug_assert!(!new_position_x.is_nan());
+            debug_assert!(!new_position_y.is_nan());
             new_position_x = wrap_around(new_position_x, 0.0, WORLD_WIDTH);
             new_position_y = wrap_around(new_position_y, 0.0, WORLD_HEIGHT);
-            assert!(!new_position_x.is_nan());
-            assert!(!new_position_y.is_nan());
-            assert!((0.0..=WORLD_WIDTH).contains(&new_position_x));
-            assert!((0.0..=WORLD_HEIGHT).contains(&new_position_y));
+            debug_assert!((0.0..=WORLD_WIDTH).contains(&new_position_x));
+            debug_assert!((0.0..=WORLD_HEIGHT).contains(&new_position_y));
 
             self.bp.set_heading(id, future_heading.x, future_heading.y);
             self.bp.set_position(id, new_position_x, new_position_y);
