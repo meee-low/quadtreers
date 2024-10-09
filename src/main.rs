@@ -579,17 +579,29 @@ fn run_simulation(quantity_of_boids: usize, number_of_iterations: usize) -> Dura
 }
 
 fn main() {
-    let iterations = [100, 1000];
+    let iterations = [100, 1000, 3000];
     let number_of_boids = [1, 10, 100, 1000, 2000, 3000, 5000, 10000];
     println!("Expected time per frame: {}ms", 1000.0 / 60.0);
 
+    let min_runs = 5;
+    let min_duration = Duration::new(5, 0);
+    let max_duration = Duration::new(120, 0);
+
     for it in iterations {
         for num in number_of_boids {
-            let duration = run_simulation(num, it);
+            let mut sum = Duration::new(0, 0);
+            let mut current_run = 0;
+            while !(sum >= max_duration || (current_run >= min_runs && sum > min_duration)) {
+                sum += run_simulation(num, it);
+                current_run += 1;
+            }
+            let avg = sum / current_run;
+
             println!(
-                "{num} boids, {it} iterations: {duration:?}. Avg time per frame: {:?}",
-                duration / it as u32
+                "{num} boids, {it} frames, {current_run} runs. Total time: {sum:?}. Avg time per frame: {:?}",
+                avg / it as u32
             );
         }
+        println!("============");
     }
 }
