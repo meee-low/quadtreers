@@ -159,7 +159,7 @@ impl BoidPool {
     }
 
     fn get_future_heading(&mut self, id: BoidID) -> &Vector2D {
-        &self.current_headings[id]
+        &self.calculated_headings[id]
     }
 
     fn future_heading_add_scaled(&mut self, id: BoidID, v: &Vector2D, scalar: Coord) {
@@ -408,6 +408,7 @@ impl BoidWorld {
     }
 
     fn populate<T: Rng>(&mut self, quantity: usize, rng: &mut T) {
+        // TODO: this is only usable once.
         for i in 0..quantity {
             let pos_x: Coord = rng.gen_range(0.0..WORLD_WIDTH);
             let pos_y: Coord = rng.gen_range(0.0..WORLD_HEIGHT);
@@ -439,6 +440,7 @@ impl BoidWorld {
             let neighbors = self.qt.query_range(&neighborhood, &self.bp);
 
             debug_assert!(neighbors.len() > 0);
+            debug_assert!(neighbors.contains(&id));
 
             if neighbors.len() < 2 {
                 // 1 is always the boid itself, so it needs at least 2 to make any calculations.
@@ -579,9 +581,9 @@ fn run_simulation(quantity_of_boids: usize, number_of_iterations: usize) -> Dura
 }
 
 fn main() {
-    let iterations = [100, 1000, 3000];
+    let iterations = [100, 1000, 3000, 10000];
     let number_of_boids = [1, 10, 100, 1000, 2000, 3000, 5000, 10000];
-    println!("Expected time per frame: {}ms", 1000.0 / 60.0);
+    println!("Target (max) time per frame: {}ms", 1000.0 / 60.0);
 
     let min_runs = 5;
     let min_duration = Duration::new(5, 0);
@@ -591,7 +593,7 @@ fn main() {
         for num in number_of_boids {
             let mut sum = Duration::new(0, 0);
             let mut current_run = 0;
-            while !(sum >= max_duration || (current_run >= min_runs && sum > min_duration)) {
+            while !(sum > max_duration || (current_run >= min_runs && sum > min_duration)) {
                 sum += run_simulation(num, it);
                 current_run += 1;
             }
